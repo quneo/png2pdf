@@ -1,25 +1,26 @@
-# backend/Dockerfile
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
-    libgl1 \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+# Устанавливаем системные зависимости для OpenCV и Pillow
+RUN apk add --no-cache \
+    libstdc++ \
+    libgcc \
+    mesa-gl \
+    libjpeg-turbo \
+    zlib \
+    tiff \
+    freetype \
+    musl-locales
 
-# Копируем requirements.txt
+# Копируем и устанавливаем Python-зависимости
 COPY requirements.txt .
-
-# Устанавливаем Python зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем исходный код
+# Копируем исходники
 COPY . .
 
-# Экспонируем порт
 EXPOSE 8000
 
-# Запускаем сервер
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Без --reload для продакшена (экономит RAM)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
